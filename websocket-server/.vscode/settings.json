@@ -1,3 +1,0 @@
-{
-    "python.analysis.extraPaths": ["./lib/python3.9/site-packages", "./Lib/site-packages", "./api"]
-}
