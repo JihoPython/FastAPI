@@ -1,9 +1,9 @@
-from typing import List, Optional
-
+import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+import pythoncom
 
-from api.creon import Publisher
+from api.creon import Publisher, Bridge
 
 app = FastAPI()
 
@@ -107,7 +107,7 @@ async def push_message_to_connected_sessions(message: str, code: str):
 
 @app.get("/bridge/{code}")
 async def create_bridge(code: str):
-    bridges[code] = Publisher()
+    bridges[code] = Bridge()
     await bridges[code].generator.asend(None)
 
 @app.websocket("/bridge/{code}")
@@ -115,10 +115,13 @@ async def publish(websocket: WebSocket, code: str):
     await bridges[code].connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            await websocket.send_text(f"Message text was: {data}")
+            # data = await websocket.receive_text()
+            pythoncom.PumpWaitingMessages()
+            # print(bridges[code].live_price)
+            await asyncio.sleep(1)
+            await bridges[code].push()
     except WebSocketDisconnect:
-        publisher.remove(websocket)
+        bridges[code].remove(websocket)
 
 @app.on_event("startup")
 async def startup():

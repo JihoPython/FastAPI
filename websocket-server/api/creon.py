@@ -1,7 +1,7 @@
-from email import message
-from typing import List
+from typing import List, Tuple
 
 from fastapi import WebSocket
+import win32com.client
 
 
 class Publisher:
@@ -34,39 +34,53 @@ class Publisher:
 
 
 class LivePriceEvent:
-    def set_client(self, client, callback):
+    def set_client(self, client, price: List):
         self.client = client
-        self.callback = callback
+        self.price = price
 
     def OnReceived(self):
+        # values = []
+        # values.append(self.client.GetHeaderValue(0))
+        # values.append(self.client.GetHeaderValue(1))
+        # values.append(self.client.GetHeaderValue(13))
+        # values.append(self.client.GetHeaderValue(18))
+        # for i in range(4):
+        #     self.price[i] = values[i]
+
         code = self.client.GetHeaderValue(0)
         name = self.client.GetHeaderValue(1)
-        price = self.client.GetHeaderValue(13)
+        price= self.client.GetHeaderValue(13)
         time = self.client.GetHeaderValue(18)
 
-        print(code, name, price, time)
+        self.price[0] = code
+        self.price[1] = name
+        self.price[2] = price
+        self.price[3] = time
 
 
 class Bridge:
 
     def __init__(self) -> None:
-        import win32com.client
-
         self.connections: List[WebSocket] = []
         self.generator = self.get_publish_generator()
 
+        self.live_price = [0, 0, 0, 0]
+
         self.is_subscribe = False
         self.client = win32com.client.Dispatch('DsCbo1.StockCur')
+        self.subscribe()
 
     async def get_publish_generator(self):
-        import pythoncom
         while True:
             message = yield
-            pythoncom.PumpWaitingMessages()
             await self._broadcast(message)
 
-    async def push(self, msg: str):
-        await self.generator.asend(msg)
+    async def push(self, msg: str = False):
+        if msg:
+            await self.generator.asend(msg)
+        else:
+            msg = f"{self.live_price[0]}, {self.live_price[1]}, {self.live_price[2]}, {self.live_price[3]}"
+            await self.generator.asend(msg)
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -79,7 +93,6 @@ class Bridge:
         """
         Creon API Subscribe
         """
-        import win32com.client
         if self.is_subscribe:
             self.unsubscribe()
 
@@ -87,7 +100,7 @@ class Bridge:
         self.client.SetInputValue(0, code)
 
         handler = win32com.client.WithEvents(self.client, LivePriceEvent)
-        handler.set_client(self.client, self.push)
+        handler.set_client(self.client, self.live_price)
         handler.client.Subscribe()
 
         self.is_subscribe = True
