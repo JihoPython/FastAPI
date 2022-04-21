@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from models.creon import CreonAPI
-from models.dto import LivePrice
+if TYPE_CHECKING:
+    from models.creon.creon_plus import CreonAPI
 
 
 class EventHandler(ABC):
     @abstractmethod
-    def init(self, api: CreonAPI, dto: Any) -> None:
+    def init(self, api: 'CreonAPI', dto: Any) -> None:
         pass
     @abstractmethod
     def OnReceived(self) -> None:

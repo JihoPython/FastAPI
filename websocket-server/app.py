@@ -2,7 +2,6 @@ from pathlib import Path
 import sys
 
 from fastapi import FastAPI
-import uvicorn
 
 from api import live_router
 
@@ -13,7 +12,9 @@ def create_app() -> FastAPI:
     app = FastAPI()
 
     app.include_router(live_router, prefix='/live')
+    # app.include_router(static_router, prefix='/static')
 
     return app
 
-uvicorn.run(create_app())
+# uvicorn.run(create_app())
+app = create_app()

@@ -6,7 +6,7 @@ class LivePrice:
     code: str
     name: str
     price: int
-    tume: int
+    time: int
 
     @property
     def __dict__(self):
@@ -14,5 +14,5 @@ class LivePrice:
             'code': self.code,
             'name': self.name,
             'price': self.price,
-            'tume': self.tume,
+            'time': self.time,
         }
