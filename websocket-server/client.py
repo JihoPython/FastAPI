@@ -1,25 +1,23 @@
 import asyncio
 import websockets
 import requests
-# from fastapi import WebSocket
 
-# async def connect():
-#     async with websockets.connect("ws://localhost:8000/ws") as websocket:
-#         # await websocket.send('python client connected')
-#         data = await websocket.recv()
-#         print(data)
 
-# asyncio.get_event_loop().run_until_complete(connect())
+SERVER_HOST = 'localhost:8000/live/'
+SYMBOL_CODE = 'A005930'
+URL = {
+    "HTTP": f"http://{SERVER_HOST}{SYMBOL_CODE}",
+    "WS": f"ws://{SERVER_HOST}{SYMBOL_CODE}",
+    "TEST": "ws://simple-websocket-server-echo.glitch.me/"
+}
 
-# while True:
-#     pass
+# Live Price Server에서 준비시킴
+print(requests.get(URL["HTTP"]))
 
-async def hello():
-    async with websockets.connect("ws://localhost:8000/ws") as websocket:
-        requests.get("http://localhost:8000/push/client")
-        await websocket.recv()
+async def listen():
+    async with websockets.connect(URL["WS"]) as ws:
+        while True:
+            msg = await ws.recv()
+            print(msg)
 
-asyncio.run(hello())
-
-while True:
-    pass
+asyncio.get_event_loop().run_until_complete(listen())
